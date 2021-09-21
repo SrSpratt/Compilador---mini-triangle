@@ -8,7 +8,6 @@ public class TokenScanner{
 	private int line;
 	private int column;
 	private FileInputStream fis;
-	private FileOutputStream output;
 	private StringBuffer commentline;
 	private StringBuffer actualline;
 	private char currentChar;
@@ -30,40 +29,39 @@ public class TokenScanner{
 		ERROR, //13
 		PROGRAM, //14
 		BEGIN, //15	
-		TRUE, //16
-		FALSE, //17
-		DO, //18
-		OF, //19
-		ELSE, //20
-		END, //21
-		IF, //22
-		OR, //23
-		AND, //24
-		INTEGER, //25
-		REAL, //26
-		ARRAY, //27
-		BOOLEAN, //28
-		THEN, //29
-		VAR, //30
-		WHILE, //31
-		SEMICOLON, //32
-		COLON, //33
-		BECOMES, //34
-		COMMA,  //35
-		DOT, //36
-		DDOT, //37
-		LPAREN, //38
-		RPAREN, //39
-		EOL, //40
-		EOT, //41
-		OTHER; //42
+		TRUE, //18
+		FALSE, //19
+		DO, //20
+		OF, //21
+		ELSE, //22
+		END, //23
+		IF, //24
+		OR, //25
+		AND, //26
+		INTEGER, //26
+		REAL, //27
+		ARRAY, //28
+		BOOLEAN, //29
+		THEN, //32
+		VAR, //33
+		WHILE, //34
+		SEMICOLON, //35
+		COLON, //36
+		BECOMES, //37
+		COMMA,  //38
+		DOT, //39
+		DDOT, //40
+		LPAREN, //41
+		RPAREN, //42
+		EOL, //43
+		EOT, //44
+		OTHER; //45
 	}
 
-	public TokenScanner(FileInputStream fis, String str) throws IOException{
+	public TokenScanner(FileInputStream fis) throws IOException{
 		line = 1;
-		column = 0;
+		column = 1;
 		this.fis = fis;
-		this.output = new FileOutputStream(str, true);
 		this.commentline = new StringBuffer();
 		this.actualline = new StringBuffer();
 		this.currentChar = (char) fis.read();
@@ -109,28 +107,27 @@ public class TokenScanner{
 		boolean c = false;
 		commentline = new StringBuffer();
 		try{
-			while ((currentChar == '!') || (currentChar == '\t') || (currentChar == '\n') || (currentChar == ' ')){
-				if (currentChar == '!' ){
-					while (currentChar != '\n' && currentChar != (char) -1){
-						take(currentChar);
-						commentline.append(currentChar);
-					}
-					c = true;
-				} else if (currentChar == '\t'){
-					//has to PASSARDIRETO
+			if (currentChar == '!' ){
+				while (currentChar != '\n' && currentChar != (char) -1){
 					take(currentChar);
-					c = true;
-				} else if (currentChar == ' '){
-					//ÊTI RÉS TCHU PASSARDIRETO
-					take(currentChar);
-					c = true;
-				} else if (currentChar == '\n'){
-					//CEIME RIRI
-					take(currentChar);
-					column = 0;
-					line++;
-					c = true;
+					commentline.append(currentChar);
 				}
+				c = true;
+			} else if (currentChar == '\t'){
+				//has to PASSARDIRETO
+				take(currentChar);
+				column++; //observar a GUI
+				c = true;
+			} else if (currentChar == ' '){
+				//ÊTI RÉS TCHU PASSARDIRETO
+				take(currentChar);
+				c = true;
+			} else if (currentChar == '\n'){
+				//CEIME RIRI
+				take(currentChar);
+				column = 1;
+				line++;
+				c = true;
 			}	
 		}catch (IOException e){
 			System.err.printf("Erro na leitura do caractere: %s. \n", e.getMessage());
@@ -209,10 +206,6 @@ public class TokenScanner{
 						b = tokensenum.BECOMES.ordinal();
 						return b;	
 					}
-					b = tokensenum.COLON.ordinal();
-					break;
-				case ';':
-					takeIt();
 					b = tokensenum.SEMICOLON.ordinal();
 					break;
 				case ',':
@@ -236,19 +229,19 @@ public class TokenScanner{
 					takeIt();
 					b = tokensenum.RPAREN.ordinal();
 					break;
-				/*case '\n':
+				case '\n':
 					takeIt();
 					column = 1;
 					line++;
 					b = tokensenum.EOL.ordinal();
-					break;*/
+					break;
 				case (char) -1:
 					b = tokensenum.EOT.ordinal();
 					break;
 				default:
 					currentChar = (char) fis.read();
 					b = -1;
-					System.out.println("OUTRO\n linha: "+this.whichLine()+"\n coluna: "+this.whichColumn());
+					System.out.println("OUTRO");
 					//b = tokensenum.OTHER.ordinal();
 			}
 		}catch (IOException e){
@@ -265,9 +258,10 @@ public class TokenScanner{
 			//do {
 				this.separator(); 
 				int b = this.scanToken();
-				if (b != -1)
+				if (b != -1){
 					//if (b == 0)
-					riposte = new Tuple(this.actualline.toString().toLowerCase(),b);
+					riposte = new Tuple(this.actualline.toString(),b);
+				}
 
 		//	} while (fis.available() > 0);//está dentro do CATCH, CARAMBA
 		
@@ -277,27 +271,57 @@ public class TokenScanner{
 
 		try{
 		if (riposte.getSecond() == 0)
-			for (tokensenum x : tokensenum.values()){
-				if (riposte.getFirst().equals(x.name().toLowerCase())){
-					String str = x.name().toLowerCase();
-					int i = x.ordinal();	
-					riposte = new Tuple(str, i);
-				}
-			}
+			if (riposte.getFirst().equals("if")){
+				String str = tokensenum.IF.name().toLowerCase();
+				int i = tokensenum.IF.ordinal();	
+				riposte = new Tuple(str, i);
+		}
 		}catch(Exception e){
                         System.err.printf("Erro na abertura do arquivo: %s. \n", e.getMessage());
 
-		}
-
-		try {	
-			output.write(Integer.toString(riposte.getSecond()).getBytes());
-			output.write('#');
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-
-
+		}	
 		return riposte;
 	}
+
+
+	
+	public static int init (File file){
+		
+			Tuple currentToken = new Tuple("0",0);
+			char currentc, aux;
+
+			int auxI = -1;
+
+			try {
+				FileInputStream fis = new FileInputStream(file);
+				TokenScanner tokenScanner = new TokenScanner(fis);
+				currentToken = tokenScanner.scan();
+
+			} catch (IOException e){
+				System.err.printf("Erro na abertura do arquivo: %s. \n", e.getMessage());
+			}
+			System.out.println(currentToken.getFirst());
+			System.out.println(currentToken.getSecond());
+			return auxI;
+		}
+
+
+	public static void main(String []args) {
+
+		File file = new File(args[0]);
+		
+			if (!(file.exists())) {
+				System.out.println(args[0] + " does not exist.");
+				return;
+			}
+			if (!(file.isFile() && file.canRead())){
+				System.out.println(file.getName() + " cannot be read from.");
+				return;
+			}
+			
+		init(file);
+
+							
+
+			}
 }

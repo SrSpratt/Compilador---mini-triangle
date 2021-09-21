@@ -1,0 +1,7 @@
+program test;
+!fjdkshfkj
+	var x : integer;
+begin
+	x := 2;
+	x := x+1
+end.
