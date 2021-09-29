@@ -4,6 +4,8 @@ import java.io.FileOutputStream;
 
 public class Parser {
 
+	
+//métodos e atributos essenciais
     private TokenScanner tokenScanner;
     private Tuple currentToken;
     
@@ -24,63 +26,24 @@ public class Parser {
 			str = x.name().toLowerCase();
         if(currentToken.getSecond() == expectedKind)
 		currentToken = tokenScanner.scan();
-	else
+	else{
 		System.out.println("Na linha: "+tokenScanner.whichLine()+" e coluna: "+tokenScanner.whichColumn()+" era esperado: "+str+", mas foi dado: "+currentToken.getFirst());
-    }
-
-    private void parseAtribuicao(){
-        parseVariavel();
-        accept(TokenScanner.tokensenum.BECOMES.ordinal());
-        parseExpressao();
-    }
-
-    private void parseBoolLit(){
-        if((currentToken.getSecond() == TokenScanner.tokensenum.TRUE.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.FALSE.ordinal()))
-		acceptIt();
-	else
-		System.out.println("Erro sintático boollit\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
-    }
-
-    private void parseComando(){
-	if(currentToken.getSecond() == TokenScanner.tokensenum.IDENTIFIER.ordinal())
-		parseAtribuicao();
-	else if(currentToken.getSecond() == TokenScanner.tokensenum.IF.ordinal())
-		parseCondicional();
-	else if(currentToken.getSecond() == TokenScanner.tokensenum.WHILE.ordinal())
-		parseIterativo();
-	else if(currentToken.getSecond() == TokenScanner.tokensenum.BEGIN.ordinal())
-		parseComandoComposto();
-	else
-		System.out.println("Erro sintático comando\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
-    }
-
-    private void parseComandoComposto(){
-	accept(TokenScanner.tokensenum.BEGIN.ordinal());
-	parseListaDeComandos();
-	accept(TokenScanner.tokensenum.END.ordinal());
-    }
-
-    private void parseCondicional(){
-	accept(TokenScanner.tokensenum.IF.ordinal());
-	parseExpressao();
-	accept(TokenScanner.tokensenum.THEN.ordinal());
-	parseComando();
-	if (currentToken.getSecond() == TokenScanner.tokensenum.ELSE.ordinal()){
-		accept(TokenScanner.tokensenum.ELSE.ordinal());
-		parseComando();
+	 System.exit(0);  // se não funcionar, retirar, kakaka
 	}
+    }
+
+//início da sequência de análise
+
+    private void parsePrograma(){
+	accept(TokenScanner.tokensenum.PROGRAM.ordinal());
+	accept(TokenScanner.tokensenum.IDENTIFIER.ordinal());
+	accept(TokenScanner.tokensenum.SEMICOLON.ordinal());
+	parseCorpo();
     }
 
     private void parseCorpo(){
 	parseDeclaracoes();
 	parseComandoComposto();
-    }
-
-    private void parseDeclaracaoDeVariavel(){
-	accept(TokenScanner.tokensenum.VAR.ordinal());
-	parseListaDeIds();
-	accept(TokenScanner.tokensenum.COLON.ordinal());
-	parseTipo();
     }
 
     private void parseDeclaracoes(){
@@ -90,72 +53,11 @@ public class Parser {
     	}
     }
 
-    private void parseExpressao(){
-	parseExpressaoSimples();
-	if ((currentToken.getSecond() == TokenScanner.tokensenum.GREATERTHAN.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.LESSTHAN.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum. GREATEREQUAL.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.LESSEQUAL.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.DIFFERENT.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.EQUAL.ordinal())){
-		acceptIt();
-		parseExpressaoSimples();
-	}// else
-	//	System.out.println("Erro sintático expressao\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
-    }
-
-    private void parseExpressaoSimples(){
-	parseTermo();
-	while(currentToken.getSecond() == TokenScanner.tokensenum.OPAD.ordinal()){
-		acceptIt();
-		parseTermo();
-	}
-    }
-
-    private void parseFator(){
-	if(currentToken.getSecond() == TokenScanner.tokensenum.IDENTIFIER.ordinal())
-			parseVariavel();
-	else if(currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal()){
-			if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal())
-				parseFloatLit();
-			parseLiteral();
-	} else if ((currentToken.getSecond() == TokenScanner.tokensenum.TRUE.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.FALSE.ordinal()))
-			parseLiteral();
-	else if (currentToken.getSecond() == TokenScanner.tokensenum.BRACKETL.ordinal()){
-			acceptIt();
-			parseExpressao();
-			accept(TokenScanner.tokensenum.RPAREN.ordinal());
-	} else if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal()){
-			acceptIt();
-			if (currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal()){
-				acceptIt();
-				parseLiteral();
-			} else 
-				System.out.println("Erro sintático fatorfloat\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
-	} else
-		System.out.println("Erro sintático fator geral\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn()+"\nsaída: "+currentToken.getFirst());
-    }
-
-    private void parseFloatLit(){
-	if(currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal()){
-		acceptIt();
-		accept(TokenScanner.tokensenum.DOT.ordinal());
-		if (currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal())
-			acceptIt();
-	} else if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal()){
-		acceptIt();
-		accept(TokenScanner.tokensenum.INTLITERAL.ordinal());
-	} else
-		System.out.println("Erro sintático floatlit\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
-    }
-
-    private void parseIterativo(){    
-	accept(TokenScanner.tokensenum.WHILE.ordinal());
-	parseExpressao();
-	accept(TokenScanner.tokensenum.DO.ordinal());
-	parseComando();
-    }
-
-    private void parseListaDeComandos(){
-	while((currentToken.getSecond() == TokenScanner.tokensenum.IDENTIFIER.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.IF.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.WHILE.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.BEGIN.ordinal())){
-		parseComando();
-		accept(TokenScanner.tokensenum.SEMICOLON.ordinal());
-	}
+    private void parseDeclaracaoDeVariavel(){
+	accept(TokenScanner.tokensenum.VAR.ordinal());
+	parseListaDeIds();
+	accept(TokenScanner.tokensenum.COLON.ordinal());
+	parseTipo();
     }
 
     private void parseListaDeIds(){
@@ -163,46 +65,6 @@ public class Parser {
 	while(currentToken.getSecond() == TokenScanner.tokensenum.COMMA.ordinal()){
 		acceptIt();
 		accept(TokenScanner.tokensenum.IDENTIFIER.ordinal());            
-	}
-    }
-
-    private void parseLiteral(){
-	if ((currentToken.getSecond() == TokenScanner.tokensenum.TRUE.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.FALSE.ordinal()))
-		acceptIt();
-	else if (currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal()){
-		acceptIt();
-		if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal())
-			parseFloatLit();
-	} else if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal()){
-		acceptIt();
-		if (currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal())
-			acceptIt();
-		else
-			System.out.println("Erro sintático literal\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
-	} else
-		System.out.println("Erro sintático literal\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
-    }
-
-    private void parsePrograma(){
-	accept(TokenScanner.tokensenum.PROGRAM.ordinal());
-	accept(TokenScanner.tokensenum.IDENTIFIER.ordinal());
-	accept(TokenScanner.tokensenum.SEMICOLON.ordinal());
-	parseCorpo();
-    }
-
-    private void parseSeletor(){
-	while(currentToken.getSecond() == TokenScanner.tokensenum.BRACKETL.ordinal()){
-		acceptIt();
-		parseExpressao();
-		accept(TokenScanner.tokensenum.BRACKETR.ordinal());
-	}	
-    }
-
-    private void parseTermo(){
-	parseFator();
-	while(currentToken.getSecond() == TokenScanner.tokensenum.OPMUL.ordinal()){
-		acceptIt();
-		parseFator();
 	}
     }
 
@@ -233,17 +95,166 @@ public class Parser {
 	else
 		System.out.println("Erro sintático tipo simples\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
     }
+ 
+    private void parseComandoComposto(){
+	accept(TokenScanner.tokensenum.BEGIN.ordinal());
+	parseListaDeComandos();
+	accept(TokenScanner.tokensenum.END.ordinal());
+    }  
+
+    private void parseListaDeComandos(){
+	while((currentToken.getSecond() == TokenScanner.tokensenum.IDENTIFIER.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.IF.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.WHILE.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.BEGIN.ordinal())){
+		parseComando();
+		accept(TokenScanner.tokensenum.SEMICOLON.ordinal());
+	}
+    }
+
+    private void parseComando(){
+	if(currentToken.getSecond() == TokenScanner.tokensenum.IDENTIFIER.ordinal())
+		parseAtribuicao();
+	else if(currentToken.getSecond() == TokenScanner.tokensenum.IF.ordinal())
+		parseCondicional();
+	else if(currentToken.getSecond() == TokenScanner.tokensenum.WHILE.ordinal())
+		parseIterativo();
+	else if(currentToken.getSecond() == TokenScanner.tokensenum.BEGIN.ordinal())
+		parseComandoComposto();
+	else
+		System.out.println("Erro sintático comando\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+    }
+ 
+    private void parseAtribuicao(){
+        parseVariavel();
+        accept(TokenScanner.tokensenum.BECOMES.ordinal());
+        parseExpressao();
+    }
+ 
+    private void parseCondicional(){
+	accept(TokenScanner.tokensenum.IF.ordinal());
+	parseExpressao();
+	accept(TokenScanner.tokensenum.THEN.ordinal());
+	parseComando();
+	if (currentToken.getSecond() == TokenScanner.tokensenum.ELSE.ordinal()){
+		accept(TokenScanner.tokensenum.ELSE.ordinal());
+		parseComando();
+	}
+    }
+
+    private void parseIterativo(){    
+	accept(TokenScanner.tokensenum.WHILE.ordinal());
+	parseExpressao();
+	accept(TokenScanner.tokensenum.DO.ordinal());
+	parseComando();
+    }
 
     private void parseVariavel(){
 	accept(TokenScanner.tokensenum.IDENTIFIER.ordinal());
 	parseSeletor();
     }
 
+    private void parseExpressao(){
+	parseExpressaoSimples();
+	if ((currentToken.getSecond() == TokenScanner.tokensenum.GREATERTHAN.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.LESSTHAN.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum. GREATEREQUAL.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.LESSEQUAL.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.DIFFERENT.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.EQUAL.ordinal())){
+		acceptIt();
+		parseExpressaoSimples();
+	}// else
+	//	System.out.println("Erro sintático expressao\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+    }
+
+    private void parseExpressaoSimples(){
+	parseTermo();
+	while(currentToken.getSecond() == TokenScanner.tokensenum.OPAD.ordinal()){
+		acceptIt();
+		parseTermo();
+	}
+    }
+
+    private void parseTermo(){
+	parseFator();
+	while(currentToken.getSecond() == TokenScanner.tokensenum.OPMUL.ordinal()){
+		acceptIt();
+		parseFator();
+	}
+    } 
+
+    private void parseFator(){
+	if(currentToken.getSecond() == TokenScanner.tokensenum.IDENTIFIER.ordinal())
+			parseVariavel();
+	else if(currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal()){
+			if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal())
+				parseFloatLit();
+			parseLiteral();
+	} else if ((currentToken.getSecond() == TokenScanner.tokensenum.TRUE.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.FALSE.ordinal()))
+			parseLiteral();
+	else if (currentToken.getSecond() == TokenScanner.tokensenum.BRACKETL.ordinal()){
+			acceptIt();
+			parseExpressao();
+			accept(TokenScanner.tokensenum.RPAREN.ordinal());
+	} else if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal()){
+			acceptIt();
+			if (currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal()){
+				acceptIt();
+				parseLiteral();
+			} else 
+				System.out.println("Erro sintático fatorfloat\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+	} else
+		System.out.println("Erro sintático fator geral\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn()+"\nsaída: "+currentToken.getFirst());
+    }
+
+
+    private void parseBoolLit(){
+        if((currentToken.getSecond() == TokenScanner.tokensenum.TRUE.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.FALSE.ordinal()))
+		acceptIt();
+	else
+		System.out.println("Erro sintático boollit\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+    }
+
+    private void parseFloatLit(){
+	if(currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal()){
+		acceptIt();
+		accept(TokenScanner.tokensenum.DOT.ordinal());
+		if (currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal())
+			acceptIt();
+	} else if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal()){
+		acceptIt();
+		accept(TokenScanner.tokensenum.INTLITERAL.ordinal());
+	} else
+		System.out.println("Erro sintático floatlit\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+    }
+
+    private void parseLiteral(){
+	if ((currentToken.getSecond() == TokenScanner.tokensenum.TRUE.ordinal()) || (currentToken.getSecond() == TokenScanner.tokensenum.FALSE.ordinal()))
+		acceptIt();
+	else if (currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal()){
+		acceptIt();
+		if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal())
+			parseFloatLit();
+	} else if (currentToken.getSecond() == TokenScanner.tokensenum.DOT.ordinal()){
+		acceptIt();
+		if (currentToken.getSecond() == TokenScanner.tokensenum.INTLITERAL.ordinal())
+			acceptIt();
+		else
+			System.out.println("Erro sintático literal\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+	} else
+		System.out.println("Erro sintático literal\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+    }
+
+    private void parseSeletor(){
+	while(currentToken.getSecond() == TokenScanner.tokensenum.BRACKETL.ordinal()){
+		acceptIt();
+		parseExpressao();
+		accept(TokenScanner.tokensenum.BRACKETR.ordinal());
+	}	
+    }   
+
     public void parse(){
    
 	parsePrograma();
+	if (currentToken.getSecond() != TokenScanner.tokensenum.DOT.ordinal()){
+		System.out.println(currentToken.getSecond());
+		System.err.println("Fim de arquivo inválido:"+"\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+		System.exit(0);
+	}
 	System.out.println("Finalizado\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
-	//	if (currentToken.getSecond() != TokenScanner.tokensenum.EOT.ordinal())
-	//		System.err.println("Fim de arquivo, inválido:"+"\nlinha: "+tokenScanner.whichLine()+"\ncoluna: "+tokenScanner.whichColumn());
+
    }
 }
